@@ -39,7 +39,7 @@ pipeline {
 		stage('Push2DockerHub') {
 
 			steps {
-				sh "docker push dlfarande/dlf-bankapp-eta-eta-app:latest"
+				sh "docker push dlfarande/dlf-bankapp-eta-app:latest"
 			}
 		}
         stage('Deploy to Kubernetes Dev Environment') {
