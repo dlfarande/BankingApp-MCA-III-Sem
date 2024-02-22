@@ -1,29 +1,27 @@
 pipeline {
-    agent { label 'jappbuildserver1' }	
-
-    tools {
-        // Install the Maven version configured as "M3" and add it to the path.
-        maven "maven_3.6.3"
-    }
-
-	environment {	
-		DOCKERHUB_CREDENTIALS=credentials('dockerloginid')
-	} 
+    agent { label 'Slave_Node1' }
     
+   tools {
+        // Define Maven tool installation
+        maven 'maven-3.6.3'
+    }
+    environment {	
+		DOCKERHUB_CREDENTIALS=credentials('dockerhub_credentials')
+	} 
+
     stages {
         stage('SCM Checkout') {
             steps {
-                // Get some code from a GitHub repository
-                git 'https://github.com/LoksaiETA/BankingApp.git'
-                //git 'https://github.com/LoksaiETA/Java-mvn-app2.git'
+		echo 'Perform SCM Checkout'
+           	git 'https://github.com/dlfarande/BankingApp.git'
             }
-		}
+        }
         stage('Maven Build') {
             steps {
                 // Run Maven on a Unix agent.
                 sh "mvn -Dmaven.test.failure.ignore=true clean package"
             }
-		}
+        }
        stage("Docker build"){
             steps {
 				sh 'docker version'
