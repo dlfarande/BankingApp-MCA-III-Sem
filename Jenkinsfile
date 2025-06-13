@@ -1,53 +1,50 @@
 pipeline {
     agent { label 'Slave_Node1' }
-    
-   tools {
-        // Define Maven tool installation
+
+    tools {
         maven 'maven-3.6.3'
     }
-    environment {	
-		DOCKERHUB_CREDENTIALS=credentials('dockerhub_credentials')
-	} 
+
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub_credentials')
+        IMAGE_NAME = 'dlfarande/dlf-bankapp-eta-app'
+        GIT_REPO = 'https://github.com/dlfarande/BankingApp.git'
+    }
 
     stages {
         stage('SCM Checkout') {
             steps {
-		echo 'Perform SCM Checkout'
-           	git 'https://github.com/dlfarande/BankingApp.git'
+                echo 'Perform SCM Checkout'
+                git "${GIT_REPO}"
             }
         }
+
         stage('Maven Build') {
             steps {
-                // Run Maven on a Unix agent.
                 sh "mvn -Dmaven.test.failure.ignore=true clean package"
             }
         }
-       stage("Docker build"){
+
+        stage("Docker Build & Tag") {
             steps {
-				sh 'docker version'
-				sh "docker build -t dlfarande/dlf-bankapp-eta-app:${BUILD_NUMBER} ."
-				sh 'docker image list'
-				sh "docker tag dlfarande/dlf-bankapp-eta-app:${BUILD_NUMBER} dlfarande/dlf-bankapp-eta-app:latest"
+                sh 'docker version'
+                sh "docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} ."
+                sh 'docker images'
+                sh "docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${IMAGE_NAME}:latest"
             }
         }
-		stage('Login2DockerHub') {
 
-			steps {
-				sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
-			}
-		}
-		stage('Push2DockerHub') {
-
-			steps {
-				sh "docker push dlfarande/dlf-bankapp-eta-app:latest"
-			}
-		}
-        stage('Deploy to Kubernetes Dev Environment') {
+        stage('Login to DockerHub') {
             steps {
-		script {
-		    sshPublisher(publishers: [sshPublisherDesc(configName: 'kubernets_cluster', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: 'kubectl apply -f kubernetesdeploy.yaml', execTimeout: 120000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '.', remoteDirectorySDF: false, removePrefix: '', sourceFiles: '*.yaml')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)]) }
-            	 }
+                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
             }
-    	}
+        }
+
+        stage('Push Image to DockerHub') {
+            steps {
+                sh "docker push ${IMAGE_NAME}:${BUILD_NUMBER}"
+                sh "docker push ${IMAGE_NAME}:latest"
+            }
+        }
     }
 }
