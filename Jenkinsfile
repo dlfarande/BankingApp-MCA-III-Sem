@@ -7,8 +7,8 @@ pipeline {
 
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub_credentials')
-        IMAGE_NAME = 'dlfarande/dlf-bankapp-eta-app'
-        GIT_REPO = 'https://github.com/dlfarande/BankingApp.git'
+        IMAGE_NAME = 'dlfarande/dlf-bankapp-mca-app'
+        GIT_REPO = 'https://github.com/dlfarande/BankingApp-MCA-III-Sem.git'
     }
 
     stages {
